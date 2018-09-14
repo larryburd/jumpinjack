@@ -1,0 +1,42 @@
+<html>
+    <head>
+        <!-- Load Tensorflow Obtained from https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.11.7-->
+        <script src='../../js/tf.js' type='text/javascript'></script>
+        <!-- Load Posenet Obtained from https://cdn.jsdelivr.net/npm/@tensorflow-models/posenet@0.1.2-->
+        <script src='../../js/pn.js' type='text/javascript'></script>
+        <!-- Load utilities for webcam -->
+        <script src='../../js/utils.js'></script>
+        <!-- Pose object -->
+        <script src='../../js/poseObj.js'></script>
+        <!-- Load main app script -->
+        <script src='./TF Train/src/tfTrain.js'></script>
+        <!-- Load stylesheet -->
+        <link href='../../index.css' rel='stylesheet' />
+        <style>
+            #snapShotCanvas {
+                position: absolute;
+                left: 0px;
+                top: 0px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class='column'>
+            <div id='cameraArea'>
+                <video id='videoOutput' width='320' height='240'></video>
+            </div>
+    
+            <div>
+                <canvas id='snapShotCanvas' width="320" height="240"></canvas>
+            </div>
+    
+            <div>
+                <canvas id='frameCanvas' width='320' height="240" style='display: none'></canvas>
+            </div>
+            <div class='controls'>
+                <button id='startAndStop'>Start</button>
+                <button id='captureImage'>Frame Cap</button>
+            </div>
+        </div>
+    </body>
+</html>

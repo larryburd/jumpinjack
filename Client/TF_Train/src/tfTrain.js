@@ -1,18 +1,19 @@
-let videoOutput;
-let net, trainingFiles;
-let poseObjects = [];
-let continueOps = false;
+let videoOutput;        // will hold video output HTML element
+let net, trainingFiles; // will hold poseNet object and training files list
+let poseObjects = [];   // will hold all poses calculated for a video
+let continueOps = false;// flag to continue execution of program
 
 // Wait until the page is fully loaded
 // then initialize the program
 window.onload = () => init();
 
 // Initialize global variables
-function init() {    
+function init() {
+    // Setup video HTML element    
     videoOutput = document.getElementById('videoOutput');
-    videoOutput.playbackRate = .25;
-    videoOutput.addEventListener("timeupdate", getPose);
-    videoOutput.addEventListener('ended', stopOps);
+    videoOutput.playbackRate = .25; // poseNet takes a bit to calculate.  slowing the video allows it to keep up
+    videoOutput.addEventListener("timeupdate", getPose);    // Add function to get the pose in the frame each time the time stamp updates
+    videoOutput.addEventListener('ended', stopOps);         // Add function to stop poseNet calculations once video finishes playing
 
     // Make the start/stop button toggle video
     startAndStop.addEventListener('click', toggleVideo);
@@ -22,12 +23,13 @@ function init() {
         net = loadedNet;
     });
 
+    // Gets a lits of files from the Data_Set folder
     getTrainingList();
 }
 
 function getTrainingList() {
-    const filePath  =  '../Data_Set/Train/train.list';
-    let rawFile     =  new XMLHttpRequest();
+    const filePath  =  './Data_Set/Train/train.list';
+    let rawFile     =  new XMLHttpRequest();  // create a new AJAX object
     let fileText;
     
     // Open an AJAX request
@@ -39,8 +41,8 @@ function getTrainingList() {
         if (rawFile.readyState === 4) {
             if (rawFile.status === 200 || rawFile.status === 0) {
                 fileText = rawFile.responseText;
-                trainingFiles = fileText.split('\n');
-                trainingFiles.splice(0, 1);  // Remove first element as it is the name of the file
+                trainingFiles = fileText.split('\n');   // Places each line into its own array element
+                trainingFiles.splice(0, 1);             // Remove first element as it is the name of the file
             }
         }
     }
@@ -49,7 +51,8 @@ function getTrainingList() {
     rawFile.send();
 }
 
-
+// Currently main function to play video
+// and start poseNet calculations [will be replaced by analyzeVideos()]
 function toggleVideo() {
     let sourceElement = document.createElement('source');
     continueOps       = true;
@@ -69,8 +72,9 @@ function toggleVideo() {
 // run each frame through poseNet
 // and save the poses for later analysis
 function analyzeVideos() {
-    let sourceElement = document.createElement('source');
+    let sourceElement = document.createElement('source');   // Create source HTML element to hold the video's source url
 
+    // Loop through each fileName and collect pose data
     trainingFiles.foreach(fileName => {
         sourceElement.setAttribute('src', `../Data_Set/Train/${fileName}`);
         videoOutput.appendChild(sourceElement);
@@ -81,14 +85,14 @@ function analyzeVideos() {
 // Callback for when the 
 // video's frame is changed
 function getPose() {
-    posenetCalc(videoOutput);
+    posenetCalc(videoOutput);   // calculate pose
 }
 
 
 // Callback to stop program
 // once video is done
 function stopOps() {
-    continueOps = false;
+    continueOps = false;    // Change flag to stop program execution
 }
 
 // Runs posenet
@@ -98,25 +102,31 @@ function posenetCalc(image) {
     const flipHorizontal      =     false;  // Flips image horizontally
     const poseArgs            =     [image, imageScaleFactor, flipHorizontal, outputStride];
 
+    // Run image and arguments through pose model
     net.estimateSinglePose(...poseArgs)
         .then(poseSuccessFunc, poseErrorFunc);
 }
 
+// poseNet successfully returned a pose
 function poseSuccessFunc(pose) {
     console.log('pose success: ' + JSON.stringify(pose));
 
     drawKeypoints(pose);
 }
 
+// An error occurred calculating pose
 function poseErrorFunc(err) {
     console.log(`Error calculating pose: ${err}`);
 }
 
 // Cause program to 'sleep' for supplied milliseconds
+// Not currently used **MARK FOR DELETION**
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+// Draws circles at keypoints on a canvas
+// The keypoints are derived from the pose object
 function drawKeypoints(pose) {
     let canvas     =   document.getElementById('snapShotCanvas');  // New canvas to draw on for keypoints
     let canvasCtx  =   canvas.getContext('2d');                    // Context of the new canvas

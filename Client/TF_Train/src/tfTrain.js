@@ -26,7 +26,7 @@ function init() {
 }
 
 function getTrainingList() {
-    const filePath  =  './TF Train/Data Set/Train/train.list';
+    const filePath  =  '../Data_Set/Train/train.list';
     let rawFile     =  new XMLHttpRequest();
     let fileText;
     
@@ -55,7 +55,7 @@ function toggleVideo() {
     continueOps       = true;
 
     // Holds the url source for the video to load
-    sourceElement.setAttribute('src', './TF Train/Data Set/Train/v_JumpingJack_g01_c01.webm');
+    sourceElement.setAttribute('src', '../Data_Set/Train/v_JumpingJack_g01_c01.webm');
 
     // Add source to video, set playback to 25%
     // and add event listners
@@ -72,7 +72,7 @@ function analyzeVideos() {
     let sourceElement = document.createElement('source');
 
     trainingFiles.foreach(fileName => {
-        sourceElement.setAttribute('src', `./TF Train/Data Set/Train/${fileName}`);
+        sourceElement.setAttribute('src', `../Data_Set/Train/${fileName}`);
         videoOutput.appendChild(sourceElement);
         videoOutput.play();
     });

@@ -1,0 +1,18 @@
+{
+  "name": "jumpinjack",
+  "version": "0.8.0",
+  "description": "System to train a computer model to detect when a human has completed a jumping jack",
+  "main": "/Server/server.js",
+  "scripts": {
+    "start": "node ./Server/server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": ".git"
+  },
+  "dependencies": {
+    "express": "^4.16.3"
+  },
+  "author": "Laurence Burden",
+  "license": "ISC"
+}

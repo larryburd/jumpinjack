@@ -1,7 +1,30 @@
 let videoOutput;        // will hold video output HTML element
-let net, trainingFiles; // will hold poseNet object and training files list
+let net;                // will hold poseNet object
 let poseObjects = [];   // will hold all poses calculated for a video
 let continueOps = false;// flag to continue execution of program
+
+// These objects will hold the list of filnames
+// for training and testing.  The labes of correct
+// and incorrect will be used in training the model
+let trainingFiles = {
+    correct:    [],
+    incorrect:  []
+}
+let testFiles = {
+    correct:    [],
+    incorrect:  []
+}
+
+// These objects hold the poses for the 
+// training and test data
+let trainingPoses = {
+    correct:    [],
+    incorrect:  []
+}
+let testPoses = {
+    correct:    [],
+    incorrect:  []
+}
 
 // Wait until the page is fully loaded
 // then initialize the program
@@ -24,16 +47,37 @@ function init() {
     });
 
     // Gets a lits of files from the Data_Set folder
-    getTrainingList();
+    getDataSet();
 }
 
-function getTrainingList() {
-    const filePath  =  './Data_Set/Train/train.list';
-    let rawFile     =  new XMLHttpRequest();  // create a new AJAX object
+function getDataSet() {
+    // Get correct training files
+    let filePath = './Data_Set/Train/correct/correctList.txt';
+    let fileText = ajax(filePath);
+    trainingFiles.correct = fileText.split('\r\n');
+
+    // Get incorrect training files
+    filePath = './Data_Set/Train/incorrect/incorrectList.txt';
+    fileText = ajax(filePath);
+    trainingFiles.incorrect = fileText.split('\r\n');
+
+    // Get correct Test Files
+    filePath = './Data_Set/Test/correct/correctList.txt';
+    fileText = ajax(filePath);
+    testFiles.correct = fileText.split('\r\n');
+
+    // Get incorrect Test Files
+    filePath = './Data_Set/Test/incorrect/incorrectList.txt';
+    fileText = ajax(filePath);
+    testFiles.incorrect = fileText.split('\r\n');    
+}
+
+function ajax(filePath) {
+    let rawFile = new XMLHttpRequest();  // create a new AJAX object
     let fileText;
     
     // Open an AJAX request
-    rawFile.open("GET", filePath, true);
+    rawFile.open("GET", filePath, false);
     
     // Add file list to global variable once done
     // and the return status is 'ok'
@@ -41,14 +85,14 @@ function getTrainingList() {
         if (rawFile.readyState === 4) {
             if (rawFile.status === 200 || rawFile.status === 0) {
                 fileText = rawFile.responseText;
-                trainingFiles = fileText.split('\n');   // Places each line into its own array element
-                trainingFiles.splice(0, 1);             // Remove first element as it is the name of the file
             }
         }
     }
     
     // Send the request
     rawFile.send();
+
+    return fileText;
 }
 
 // Currently main function to play video
@@ -58,13 +102,13 @@ function toggleVideo() {
     continueOps       = true;
 
     // Holds the url source for the video to load
-    sourceElement.setAttribute('src', '../Data_Set/Train/v_JumpingJack_g01_c01.webm');
+    sourceElement.setAttribute('src', testFiles.correct[0]);
 
     // Add source to video, set playback to 25%
     // and add event listners
     videoOutput.appendChild(sourceElement);
     videoOutput.addEventListener("timeupdate", getPose);
-    videoOutput.addEventListener('ended', stopOps);
+    //videoOutput.addEventListener('ended', stopOps);
     videoOutput.play();
 }
 
@@ -75,8 +119,9 @@ function analyzeVideos() {
     let sourceElement = document.createElement('source');   // Create source HTML element to hold the video's source url
 
     // Loop through each fileName and collect pose data
-    trainingFiles.foreach(fileName => {
-        sourceElement.setAttribute('src', `../Data_Set/Train/${fileName}`);
+    trainingFiles.correct.foreach(fileName => {
+        sourceElement.setAttribute('src', `../Data_Set/Train/correct/${fileName}`);
+        videoOutput.addEventListener('ended', () => {continue});  // Continue to next video once this one ends
         videoOutput.appendChild(sourceElement);
         videoOutput.play();
     });

@@ -34,12 +34,14 @@ window.onload = () => init();
 function init() {
     // Setup video HTML element    
     videoOutput = document.getElementById('videoOutput');
-    videoOutput.playbackRate = .25; // poseNet takes a bit to calculate.  slowing the video allows it to keep up
-    videoOutput.addEventListener("timeupdate", getPose);    // Add function to get the pose in the frame each time the time stamp updates
-    videoOutput.addEventListener('ended', stopOps);         // Add function to stop poseNet calculations once video finishes playing
+    videoOutput.playbackRate = .25;                         // poseNet takes a bit to calculate.  slowing the video allows it to keep up
+    //videoOutput.addEventListener("timeupdate", getPose);    // Add function to get the pose in the frame each time the time stamp updates
+    //videoOutput.addEventListener('ended', stopOps);         // Add function to stop poseNet calculations once video finishes playing
 
     // Make the start/stop button toggle video
     startAndStop.addEventListener('click', toggleVideo);
+
+    document.getElementById('startAnalyzing').addEventListener('click', analyzeVideos);
 
     // Load the posenet object
     posenet.load().then(function(loadedNet) {
@@ -107,7 +109,7 @@ function toggleVideo() {
     // Add source to video, set playback to 25%
     // and add event listners
     videoOutput.appendChild(sourceElement);
-    videoOutput.addEventListener("timeupdate", getPose);
+    //videoOutput.addEventListener("timeupdate", getPose);
     //videoOutput.addEventListener('ended', stopOps);
     videoOutput.play();
 }
@@ -117,22 +119,51 @@ function toggleVideo() {
 // and save the poses for later analysis
 function analyzeVideos() {
     let sourceElement = document.createElement('source');   // Create source HTML element to hold the video's source url
-
+    let videoStatus, prevVideoTime;
     // Loop through each fileName and collect pose data
-    trainingFiles.correct.foreach(fileName => {
-        sourceElement.setAttribute('src', `../Data_Set/Train/correct/${fileName}`);
-        videoOutput.addEventListener('ended', () => {continue});  // Continue to next video once this one ends
-        videoOutput.appendChild(sourceElement);
+    for (let i = 0; i < trainingFiles.correct.length; i++) {
+        console.log(`Analyzing: ${trainingFiles.correct[i]}`);
+        sourceElement.setAttribute('src', `../Data_Set/Train/correct/${trainingFiles.correct[i]}`);
+        analyzeVideo(sourceElement);
+
+        analyzeFrame(0);
+    }
+}
+
+function analyzeFrame(prevVideoTime) {
+    if (prevVideoTime !== videoOutput.currentTime && videoOutput.currentTime > 0){
+        console.log('Current video time: ' + videoOutput.currentTime);
+        videoOutput.pause();
+        getPose();
         videoOutput.play();
-    });
+    }
+
+    prevVideoTime = videoOutput.currentTime;
+
+    if (videoOutput.ended === false){
+        analyzeFrame(prevVideoTime);
+    }
+}
+
+function analyzeVideo(sourceElement) {
+    videoOutput.appendChild(sourceElement);
+    console.log(`source: ${sourceElement}`);
+    videoOutput.play();
 }
 
 // Callback for when the 
 // video's frame is changed
-function getPose() {
-    posenetCalc(videoOutput);   // calculate pose
+async function getPose() {
+    console.log('getting pose');
+    await posenetCalc(videoOutput);
+    //pushPose(pose);
+    return;
 }
 
+function pushPose(pose) {
+    console.log(`Adding pose: ${pose}`);
+    trainingPoses.correct.push(pose);
+}
 
 // Callback to stop program
 // once video is done
@@ -141,22 +172,26 @@ function stopOps() {
 }
 
 // Runs posenet
-function posenetCalc(image) {
-    const imageScaleFactor    =     1;      // Size of the image to send to posenet (0.1 - 1)
-    const outputStride        =     32;     // Controls accuracy at the cost of speed (8, 16, 32)
+async function posenetCalc(image) {
+    const imageScaleFactor    =     .5;      // Size of the image to send to posenet (0.1 - 1)
+    const outputStride        =     16;     // Controls accuracy at the cost of speed (8, 16, 32)
     const flipHorizontal      =     false;  // Flips image horizontally
     const poseArgs            =     [image, imageScaleFactor, flipHorizontal, outputStride];
 
+    console.log(`Image: ${image}`);
     // Run image and arguments through pose model
-    net.estimateSinglePose(...poseArgs)
+    await net.estimateSinglePose(...poseArgs)
         .then(poseSuccessFunc, poseErrorFunc);
+
+    return;
 }
 
 // poseNet successfully returned a pose
 function poseSuccessFunc(pose) {
     console.log('pose success: ' + JSON.stringify(pose));
+    return JSON.stringify(pose);
 
-    drawKeypoints(pose);
+    //drawKeypoints(pose);
 }
 
 // An error occurred calculating pose
